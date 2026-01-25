@@ -19,34 +19,44 @@ defmodule HomelabWeb.HomeLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="flex flex-col gap-8">
-        <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-lg shadow-base-200/60">
-          <p class="text-sm uppercase tracking-wide text-base-content/60">Signed in as</p>
-          <p class="mt-2 text-3xl font-semibold text-base-content">{@current_scope.user.email}</p>
+      <div class="flex flex-col gap-6">
+        <div class="rounded-3xl border border-base-300 bg-base-100 px-5 py-4 shadow-lg shadow-base-200/60 sm:px-6 sm:py-6">
+          <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+            Signed in as
+          </p>
+          <p class="mt-2 text-2xl font-semibold text-base-content md:text-3xl">
+            {@current_scope.user.email}
+          </p>
           <p class="mt-1 text-sm text-base-content/70">
             Welcome back. Secure operations and telemetry will appear here soon.
           </p>
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
-            <p class="text-sm font-medium uppercase tracking-wide text-base-content/60">
+          <div class="rounded-2xl border border-base-300 bg-base-100 px-5 py-4 sm:p-6">
+            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
               Current time (Eastern)
             </p>
-            <p id="dashboard-clock" class="mt-3 font-mono text-4xl font-semibold tracking-tight">
+            <p
+              id="dashboard-clock"
+              class="mt-2 font-mono text-2xl font-semibold tracking-tight sm:mt-3 md:text-4xl"
+            >
               {@current_time}
+            </p>
+            <p class="mt-1 text-xs text-base-content/60 sm:text-sm">
+              Synced to America/New_York for on-call coordination.
             </p>
           </div>
 
-          <div class="rounded-2xl border border-base-300 bg-base-100 p-6">
-            <p class="text-sm font-medium uppercase tracking-wide text-base-content/60">
+          <div class="rounded-2xl border border-base-300 bg-base-100 px-5 py-4 sm:p-6">
+            <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60 flex items-center gap-4">
               Reboot status
-            </p>
-            <div class="mt-3 flex items-center gap-3">
               <span class={reboot_badge_classes(@host_status.reboot_required?)}>
                 {reboot_badge_label(@host_status.reboot_required?)}
               </span>
-              <p class="text-base text-base-content">
+            </p>
+            <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <p class="text-sm text-base-content sm:text-base">
                 {reboot_description(@host_status.reboot_required?)}
               </p>
             </div>
