@@ -46,6 +46,9 @@ defmodule HomelabWeb.Layouts do
           <p class="text-sm font-medium text-base-content/80">
             {@current_scope.user.email}
           </p>
+          <.link href={~p"/system/dashboard"} class="btn btn-ghost btn-sm">
+            System dashboard
+          </.link>
           <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm">
             Settings
           </.link>

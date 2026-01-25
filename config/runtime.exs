@@ -23,6 +23,10 @@ end
 config :homelab, HomelabWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+config :homelab, Homelab.HostSignals,
+  reboot_required_path: System.get_env("REBOOT_REQUIRED_PATH") || "/var/run/reboot-required",
+  uptime_path: System.get_env("UPTIME_PATH") || "/proc/uptime"
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
