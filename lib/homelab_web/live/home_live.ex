@@ -27,9 +27,6 @@ defmodule HomelabWeb.HomeLive do
           <p class="mt-2 text-2xl font-semibold text-base-content md:text-3xl">
             {@current_scope.user.email}
           </p>
-          <p class="mt-1 text-sm text-base-content/70">
-            Welcome back. Secure operations and telemetry will appear here soon.
-          </p>
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
@@ -42,9 +39,6 @@ defmodule HomelabWeb.HomeLive do
               class="mt-2 font-mono text-2xl font-semibold tracking-tight sm:mt-3 md:text-4xl"
             >
               {@current_time}
-            </p>
-            <p class="mt-1 text-xs text-base-content/60 sm:text-sm">
-              Synced to America/New_York for on-call coordination.
             </p>
           </div>
 
