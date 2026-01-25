@@ -40,27 +40,76 @@ defmodule HomelabWeb.Layouts do
         <p class="text-xs font-semibold uppercase tracking-[0.35em] text-base-content/50">Homelab</p>
         <p class="text-lg font-semibold text-base-content">Control Plane</p>
       </div>
-      <div class="flex flex-wrap items-center gap-4">
-        <.theme_toggle />
-        <%= if @current_scope do %>
-          <p class="text-sm font-medium text-base-content/80">
-            {@current_scope.user.email}
-          </p>
-          <.link href={~p"/system/dashboard"} class="btn btn-ghost btn-sm">
-            System dashboard
-          </.link>
-          <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm">
-            Settings
-          </.link>
-          <.link href={~p"/users/log-out"} method="delete" class="btn btn-primary btn-sm">
-            Log out
-          </.link>
-        <% else %>
-          <p class="text-sm text-base-content/70">Invite-only</p>
-          <.link href={~p"/users/log-in"} class="btn btn-primary btn-sm">
-            Log in
-          </.link>
-        <% end %>
+
+      <div class="flex items-center gap-3">
+        <div class="relative md:hidden">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            aria-label="Toggle menu"
+            phx-click={JS.toggle_class("hidden", to: "#mobile-nav")}
+          >
+            <.icon name="hero-bars-3" class="size-5" />
+          </button>
+
+          <div
+            id="mobile-nav"
+            class="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-base-200 bg-base-100 p-4 shadow-xl shadow-base-300/60 hidden"
+          >
+            <%= if @current_scope do %>
+              <p class="text-xs font-semibold uppercase tracking-wide text-base-content/60">
+                Signed in as
+              </p>
+              <p class="mt-1 truncate text-base font-semibold text-base-content">
+                {@current_scope.user.email}
+              </p>
+              <div class="mt-4 space-y-3">
+                <.theme_toggle />
+                <.link href={~p"/system/dashboard"} class="btn btn-ghost btn-sm w-full justify-start">
+                  System dashboard
+                </.link>
+                <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm w-full justify-start">
+                  Settings
+                </.link>
+                <.link
+                  href={~p"/users/log-out"}
+                  method="delete"
+                  class="btn btn-primary btn-sm w-full justify-center"
+                >
+                  Log out
+                </.link>
+              </div>
+            <% else %>
+              <p class="text-sm text-base-content/70">Invite-only</p>
+              <.link href={~p"/users/log-in"} class="btn btn-primary btn-sm mt-3 w-full">
+                Log in
+              </.link>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-4 md:flex">
+          <.theme_toggle />
+          <%= if @current_scope do %>
+            <p class="text-sm font-medium text-base-content/80">
+              {@current_scope.user.email}
+            </p>
+            <.link href={~p"/system/dashboard"} class="btn btn-ghost btn-sm">
+              System dashboard
+            </.link>
+            <.link href={~p"/users/settings"} class="btn btn-ghost btn-sm">
+              Settings
+            </.link>
+            <.link href={~p"/users/log-out"} method="delete" class="btn btn-primary btn-sm">
+              Log out
+            </.link>
+          <% else %>
+            <p class="text-sm text-base-content/70">Invite-only</p>
+            <.link href={~p"/users/log-in"} class="btn btn-primary btn-sm">
+              Log in
+            </.link>
+          <% end %>
+        </div>
       </div>
     </header>
 
@@ -128,7 +177,7 @@ defmodule HomelabWeb.Layouts do
       <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 justify-center"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="system"
       >
@@ -136,7 +185,7 @@ defmodule HomelabWeb.Layouts do
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 justify-center"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="light"
       >
@@ -144,7 +193,7 @@ defmodule HomelabWeb.Layouts do
       </button>
 
       <button
-        class="flex p-2 cursor-pointer w-1/3"
+        class="flex p-2 cursor-pointer w-1/3 justify-center"
         phx-click={JS.dispatch("phx:set-theme")}
         data-phx-theme="dark"
       >
