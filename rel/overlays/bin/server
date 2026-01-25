@@ -2,5 +2,5 @@
 set -eu
 
 cd -P -- "$(dirname -- "$0")"
-exec ./homelab eval Homelab.Release.migrate
+./homelab eval Homelab.Release.migrate
 PHX_SERVER=true exec ./homelab start
