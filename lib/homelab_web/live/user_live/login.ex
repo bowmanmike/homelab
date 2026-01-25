@@ -89,7 +89,10 @@ defmodule HomelabWeb.UserLive.Login do
   end
 
   @impl true
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
+    socket =
+      assign_new(socket, :current_scope, fn -> session["current_scope"] end)
+
     email =
       Phoenix.Flash.get(socket.assigns.flash, :email) ||
         get_in(socket.assigns, [:current_scope, Access.key(:user), Access.key(:email)])

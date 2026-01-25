@@ -5,7 +5,10 @@ defmodule HomelabWeb.HomeLive do
 
   @tick_interval :timer.seconds(1)
 
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
+    socket =
+      assign_new(socket, :current_scope, fn -> session["current_scope"] end)
+
     {:ok,
      socket
      |> assign(:current_time, formatted_time())
@@ -32,9 +35,6 @@ defmodule HomelabWeb.HomeLive do
             </p>
             <p id="dashboard-clock" class="mt-3 font-mono text-4xl font-semibold tracking-tight">
               {@current_time}
-            </p>
-            <p class="mt-1 text-sm text-base-content/70">
-              Synced to America/New_York for on-call coordination.
             </p>
           </div>
 
