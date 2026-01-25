@@ -67,7 +67,8 @@ defmodule Homelab.MixProject do
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-      {:usage_rules, "~> 0.1"}
+      {:usage_rules, "~> 0.1"},
+      {:tzdata, "~> 1.1"}
     ]
   end
 
