@@ -154,7 +154,7 @@ defmodule HomelabWeb.DockerLive.Services do
         </span>
       </div>
 
-      <dl class="grid gap-4 text-sm text-base-content/80 sm:grid-cols-2">
+      <dl class="grid gap-4 text-sm text-base-content/80">
         <div>
           <dt class="text-base-content/60">Image</dt>
           <dd class="mt-1 font-medium">{@container.image}</dd>

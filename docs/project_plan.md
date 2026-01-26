@@ -42,7 +42,8 @@
 - [x] Build function components for service cards, status badges, and empty/error states to keep the dashboard markup composable; include hover/press micro-interactions and unique DOM ids for future LiveView tests.
 - [x] Write unit tests for the Docker context (parsing sample Docker JSON payloads) and LiveView tests that assert the service list renders under success/error scenarios by injecting a mock adapter.
 - [ ] Add periodic refresh (timer or PubSub) so the service directory stays current without a full page reload.
-- [ ] Split the Docker panel into its own LiveView (`HomelabWeb.DockerLive.Services`) routed under the authenticated scope so the dashboard can embed it while keeping responsibilities isolated.
+- [x] Split the Docker panel into its own LiveView (`HomelabWeb.DockerLive.Services`) routed under the authenticated scope so the dashboard can embed it while keeping responsibilities isolated.
+- [x] Extract host telemetry (clock + reboot status) into `HomelabWeb.HostLive.Signals` so the dashboard simply embeds the panel and we can reuse it elsewhere.
 
 ### 6. Log Streaming & Observability
 
