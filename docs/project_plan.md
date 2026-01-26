@@ -44,6 +44,7 @@
 - [ ] Add periodic refresh (timer or PubSub) so the service directory stays current without a full page reload.
 - [x] Split the Docker panel into its own LiveView (`HomelabWeb.DockerLive.Services`) routed under the authenticated scope so the dashboard can embed it while keeping responsibilities isolated.
 - [x] Extract host telemetry (clock + reboot status) into `HomelabWeb.HostLive.Signals` so the dashboard simply embeds the panel and we can reuse it elsewhere.
+- [x] Wire start/stop commands through the Docker context/adapter and expose buttons on the Docker LiveView with inline status feedback.
 
 ### 6. Log Streaming & Observability
 

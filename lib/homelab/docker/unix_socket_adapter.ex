@@ -24,6 +24,43 @@ defmodule Homelab.Docker.UnixSocketAdapter do
     end
   end
 
+  @impl true
+  def start_container(container_id) do
+    "/containers/#{container_id}/start"
+    |> request(:post)
+    |> handle_void_response()
+  end
+
+  @impl true
+  def stop_container(container_id, opts) do
+    params =
+      opts
+      |> Keyword.get(:timeout)
+      |> case do
+        nil -> []
+        timeout -> [{"t", to_string(timeout)}]
+      end
+
+    "/containers/#{container_id}/stop"
+    |> request(:post, params: params)
+    |> handle_void_response()
+  end
+
+  @impl true
+  def restart_container(container_id, opts) do
+    params =
+      opts
+      |> Keyword.get(:timeout)
+      |> case do
+        nil -> []
+        timeout -> [{"t", to_string(timeout)}]
+      end
+
+    "/containers/#{container_id}/restart"
+    |> request(:post, params: params)
+    |> handle_void_response()
+  end
+
   defp params_all?(opts) do
     Keyword.get(opts, :all?, false)
   end
@@ -45,21 +82,32 @@ defmodule Homelab.Docker.UnixSocketAdapter do
   end
 
   defp docker_socket_path do
-    Application.get_env(:homelab, __MODULE__, [])
-    |> Keyword.get(:socket_path, default_socket_path())
-  end
-
-  defp default_socket_path do
-    System.get_env("DOCKER_SOCKET_PATH", "/var/run/docker.sock")
+    Application.fetch_env!(:homelab, __MODULE__)
+    |> Keyword.fetch!(:socket_path)
   end
 
   defp docker_api_base_url do
-    Application.get_env(:homelab, __MODULE__, [])
-    |> Keyword.get(:base_url, "http:///v1.41")
+    Application.fetch_env!(:homelab, __MODULE__)
+    |> Keyword.fetch!(:base_url)
   end
 
   defp docker_api_host_header do
-    Application.get_env(:homelab, __MODULE__, [])
-    |> Keyword.get(:host_header, "docker")
+    Application.fetch_env!(:homelab, __MODULE__)
+    |> Keyword.fetch!(:host_header)
   end
+
+  defp request(path, method, opts \\ [])
+
+  defp request(path, method, opts) do
+    Req.request(client(), Keyword.merge([method: method, url: path], opts))
+  end
+
+  defp handle_void_response({:ok, %Req.Response{status: status}}) when status in 200..299, do: :ok
+  defp handle_void_response({:ok, %Req.Response{status: 304}}), do: :ok
+
+  defp handle_void_response({:ok, %Req.Response{status: status, body: body}}) do
+    {:error, {:http_error, status, body}}
+  end
+
+  defp handle_void_response({:error, exception}), do: {:error, exception}
 end

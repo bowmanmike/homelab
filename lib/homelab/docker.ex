@@ -5,9 +5,10 @@ defmodule Homelab.Docker do
   context so we can stub it in tests and evolve the transport layer safely.
   """
 
-  alias Homelab.Docker.{Container, UnixSocketAdapter}
+  alias Homelab.Docker.{Adapter, Container, UnixSocketAdapter}
 
   @type list_result :: {:ok, [Container.t()]} | {:error, term()}
+  @type command_result :: :ok | {:error, term()}
 
   @doc """
   Returns the list of containers currently known to Docker. By default it only
@@ -26,6 +27,21 @@ defmodule Homelab.Docker do
 
       {:ok, containers}
     end
+  end
+
+  @spec start_container(map(), String.t()) :: command_result
+  def start_container(_current_scope, container_id) when is_binary(container_id) do
+    adapter().start_container(container_id)
+  end
+
+  @spec stop_container(map(), String.t(), keyword()) :: command_result
+  def stop_container(_current_scope, container_id, opts \\ []) when is_binary(container_id) do
+    adapter().stop_container(container_id, opts)
+  end
+
+  @spec restart_container(map(), String.t(), keyword()) :: command_result
+  def restart_container(_current_scope, container_id, opts \\ []) when is_binary(container_id) do
+    adapter().restart_container(container_id, opts)
   end
 
   defp adapter do

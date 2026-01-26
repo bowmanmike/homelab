@@ -10,7 +10,7 @@ defmodule Homelab.DockerTest do
   end
 
   test "list_containers sorts by project, service, name" do
-    TestAdapter.set_response(
+    TestAdapter.set_list_response(
       {:ok,
        [
          %{
@@ -46,8 +46,32 @@ defmodule Homelab.DockerTest do
   end
 
   test "list_containers forwards adapter errors" do
-    TestAdapter.set_response({:error, :econnrefused})
+    TestAdapter.set_list_response({:error, :econnrefused})
 
     assert {:error, :econnrefused} = Docker.list_containers()
+  end
+
+  test "start_container delegates to adapter" do
+    TestAdapter.set_start_response(:ok)
+    assert :ok = Docker.start_container(%{}, "abc123")
+
+    TestAdapter.set_start_response({:error, :denied})
+    assert {:error, :denied} = Docker.start_container(%{}, "abc123")
+  end
+
+  test "stop_container delegates to adapter" do
+    TestAdapter.set_stop_response(:ok)
+    assert :ok = Docker.stop_container(%{}, "abc123")
+
+    TestAdapter.set_stop_response({:error, :busy})
+    assert {:error, :busy} = Docker.stop_container(%{}, "abc123")
+  end
+
+  test "restart_container delegates to adapter" do
+    TestAdapter.set_restart_response(:ok)
+    assert :ok = Docker.restart_container(%{}, "abc123")
+
+    TestAdapter.set_restart_response({:error, :timeout})
+    assert {:error, :timeout} = Docker.restart_container(%{}, "abc123")
   end
 end

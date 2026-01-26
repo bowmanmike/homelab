@@ -13,8 +13,9 @@ defmodule HomelabWeb.DockerLive.Services do
       |> assign(:embedded?, session["embedded?"] || false)
       |> assign(:services, [])
       |> assign(:services_error, nil)
+      |> assign(:command_status, nil)
 
-    {:ok, refresh_services(socket)}
+    {:ok, socket |> load_services() |> schedule_refresh()}
   end
 
   def render(%{embedded?: true} = assigns) do
@@ -23,6 +24,7 @@ defmodule HomelabWeb.DockerLive.Services do
       services={@services}
       services_error={@services_error}
       embedded?={true}
+      command_status={@command_status}
     />
     """
   end
@@ -34,30 +36,76 @@ defmodule HomelabWeb.DockerLive.Services do
         services={@services}
         services_error={@services_error}
         embedded?={false}
+        command_status={@command_status}
       />
     </Layouts.app>
     """
   end
 
   def handle_info(:refresh, socket) do
-    {:noreply, refresh_services(socket)}
+    {:noreply, socket |> load_services() |> schedule_refresh()}
   end
 
-  defp refresh_services(socket) do
-    socket =
-      case Docker.list_containers(all?: true) do
-        {:ok, containers} ->
-          socket
-          |> assign(:services, containers)
-          |> assign(:services_error, nil)
+  def handle_event("start", %{"id" => container_id}, socket) do
+    run_command(socket, container_id, fn scope ->
+      Docker.start_container(scope, container_id)
+    end, fn name -> "#{name} started." end)
+  end
 
-        {:error, reason} ->
-          socket
-          |> assign(:services_error, docker_error_message(reason))
-          |> assign(:services, [])
-      end
+  def handle_event("stop", %{"id" => container_id}, socket) do
+    run_command(socket, container_id, fn scope ->
+      Docker.stop_container(scope, container_id)
+    end, fn name -> "#{name} stopped." end)
+  end
 
-    schedule_refresh(socket)
+  def handle_event("restart", %{"id" => container_id}, socket) do
+    run_command(socket, container_id, fn scope ->
+      Docker.restart_container(scope, container_id)
+    end, fn name -> "#{name} restarted." end)
+  end
+
+  defp run_command(socket, container_id, action_fun, success_message_fun) do
+    container_name = container_name(socket.assigns.services, container_id)
+
+    case action_fun.(socket.assigns.current_scope) do
+      :ok ->
+        {:noreply,
+         socket
+         |> assign(:command_status, {:ok, success_message_fun.(container_name)})
+         |> load_services()}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:command_status, {:error, command_error(reason)})
+         |> load_services()}
+    end
+  end
+
+  defp container_name(containers, id) do
+    case Enum.find(containers, &(&1.id == id)) do
+      %Container{} = container -> container_label(container)
+      _ -> id
+    end
+  end
+
+  defp command_error({:http_error, status, _body}), do: "Docker API error (#{status})"
+  defp command_error(%{} = error), do: inspect(error)
+  defp command_error(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp command_error(reason), do: inspect(reason)
+
+  defp load_services(socket) do
+    case Docker.list_containers(all?: true) do
+      {:ok, containers} ->
+        socket
+        |> assign(:services, containers)
+        |> assign(:services_error, nil)
+
+      {:error, reason} ->
+        socket
+        |> assign(:services_error, docker_error_message(reason))
+        |> assign(:services, [])
+    end
   end
 
   defp schedule_refresh(socket) do
@@ -71,6 +119,7 @@ defmodule HomelabWeb.DockerLive.Services do
   attr :services, :list, required: true
   attr :services_error, :string, default: nil
   attr :embedded?, :boolean, default: false
+  attr :command_status, :any, default: nil
 
   defp docker_panel(assigns) do
     ~H"""
@@ -90,7 +139,7 @@ defmodule HomelabWeb.DockerLive.Services do
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-col items-end gap-2 text-sm">
           <%= if @services_error do %>
             <span class="inline-flex items-center gap-2 rounded-full bg-error/10 px-3 py-1 text-sm font-semibold text-error">
               <.icon name="hero-exclamation-triangle" class="size-4" />
@@ -99,6 +148,11 @@ defmodule HomelabWeb.DockerLive.Services do
           <% else %>
             <span class="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
               <.icon name="hero-check-circle" class="size-4" /> All systems reachable
+            </span>
+          <% end %>
+          <%= if @command_status do %>
+            <span class={command_status_classes(@command_status)}>
+              {command_status_label(@command_status)}
             </span>
           <% end %>
         </div>
@@ -164,6 +218,44 @@ defmodule HomelabWeb.DockerLive.Services do
           <dd class="mt-1 font-medium">{@container.status}</dd>
         </div>
       </dl>
+
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button
+          :if={container_can_start?(@container)}
+          id={"start-#{@container.id}"}
+          phx-click="start"
+          phx-value-id={@container.id}
+          phx-disable-with="Starting…"
+          class="btn btn-primary btn-sm"
+        >
+          <.icon name="hero-play" class="size-4" />
+          <span class="ml-1">Start</span>
+        </button>
+
+        <button
+          :if={container_can_stop?(@container)}
+          id={"stop-#{@container.id}"}
+          phx-click="stop"
+          phx-value-id={@container.id}
+          phx-disable-with="Stopping…"
+          class="btn btn-outline btn-sm"
+        >
+          <.icon name="hero-pause" class="size-4" />
+          <span class="ml-1">Stop</span>
+        </button>
+
+        <button
+          id={"restart-#{@container.id}"}
+          phx-click="restart"
+          phx-value-id={@container.id}
+          phx-disable-with="Restarting…"
+          class="btn btn-ghost btn-sm"
+          disabled={!container_can_restart?(@container)}
+        >
+          <.icon name="hero-arrow-path" class="size-4" />
+          <span class="ml-1">Restart</span>
+        </button>
+      </div>
     </div>
     """
   end
@@ -197,6 +289,28 @@ defmodule HomelabWeb.DockerLive.Services do
   defp container_status_classes(_state) do
     "inline-flex items-center rounded-full bg-base-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-base-content/70"
   end
+
+  defp container_can_start?(%Container{state: state}) do
+    state not in ["running", "restarting"]
+  end
+
+  defp container_can_stop?(%Container{state: state}) do
+    state in ["running"]
+  end
+
+  defp container_can_restart?(%Container{state: state}) do
+    state in ["running"]
+  end
+
+  defp command_status_classes({:ok, _}) do
+    "inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
+  end
+
+  defp command_status_classes({:error, _}) do
+    "inline-flex items-center gap-2 rounded-full bg-error/10 px-3 py-1 text-sm font-semibold text-error"
+  end
+
+  defp command_status_label({_, message}), do: message
 
   defp humanize_seconds(seconds) when seconds < 60, do: "#{seconds}s"
 
