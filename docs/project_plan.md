@@ -5,6 +5,7 @@
 - Phoenix app skeleton with `phx.gen.auth` is in place and self-registration is disabled.
 - Initial dev user exists for validating authenticated flows.
 - Architecture goals (single-node, allowlisted commands, SQLite persistence) are captured in `docs/architecture.md`.
+- `/var/run/docker.sock` is mounted into the Homelab container, the runtime user belongs to the host `docker` group, and the dashboard now renders the live list of containers pulled via Req from the Engine API (including error badges/tests).
 
 ## Workstreams & Tasks
 
@@ -35,11 +36,12 @@
 
 ### 5. Docker Socket Integration & Service Directory
 
-- [ ] Mount `/var/run/docker.sock` into the Homelab container (document compose/service changes) so Req can talk to the local Docker Engine API without `System.cmd/3`.
-- [ ] Add a `Homelab.Docker` context (and behaviour-backed adapter) that issues authenticated HTTP requests via Req to endpoints like `GET /containers/json`, normalizes compose labels (`com.docker.compose.*`), and returns structs describing each service.
-- [ ] Extend `HomelabWeb.HomeLive` to call the Docker context during `mount/3`, store the results in a LiveView stream (`@streams.services`), and refresh them on a timer or via PubSub updates while handling socket errors gracefully.
-- [ ] Build function components for service cards, status badges, and empty/error states to keep the dashboard markup composable; include hover/press micro-interactions and unique DOM ids for future LiveView tests.
-- [ ] Write unit tests for the Docker context (parsing sample Docker JSON payloads) and LiveView tests that assert the service list renders under success/error scenarios by injecting a mock adapter.
+- [x] Mount `/var/run/docker.sock` into the Homelab container (document compose/service changes) so Req can talk to the local Docker Engine API without `System.cmd/3`.
+- [x] Add a `Homelab.Docker` context (and behaviour-backed adapter) that issues authenticated HTTP requests via Req to endpoints like `GET /containers/json`, normalizes compose labels (`com.docker.compose.*`), and returns structs describing each service.
+- [x] Extend `HomelabWeb.HomeLive` to call the Docker context during `mount/3`, store the results in a LiveView assign, and refresh them on load while handling socket errors gracefully.
+- [x] Build function components for service cards, status badges, and empty/error states to keep the dashboard markup composable; include hover/press micro-interactions and unique DOM ids for future LiveView tests.
+- [x] Write unit tests for the Docker context (parsing sample Docker JSON payloads) and LiveView tests that assert the service list renders under success/error scenarios by injecting a mock adapter.
+- [ ] Add periodic refresh (timer or PubSub) so the service directory stays current without a full page reload.
 
 ### 6. Log Streaming & Observability
 

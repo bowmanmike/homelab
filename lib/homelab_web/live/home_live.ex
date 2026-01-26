@@ -133,7 +133,18 @@ defmodule HomelabWeb.HomeLive do
      socket
      |> assign(:current_time, formatted_time())
      |> assign(:host_status, HostSignals.status())
+     |> update_docker_status()
      |> schedule_tick()}
+  end
+
+  defp update_docker_status(socket) do
+    case Docker.list_containers(all?: true) do
+      {:ok, containers} ->
+        socket |> assign(:services, containers) |> assign(:services_error, nil)
+
+      {:error, reason} ->
+        socket |> assign(:services_error, docker_error_message(reason)) |> assign(:services, [])
+    end
   end
 
   defp schedule_tick(socket) do
