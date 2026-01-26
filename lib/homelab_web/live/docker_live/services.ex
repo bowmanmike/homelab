@@ -64,6 +64,12 @@ defmodule HomelabWeb.DockerLive.Services do
     end, fn name -> "#{name} restarted." end)
   end
 
+  def handle_event("pull", %{"id" => container_id, "image" => image}, socket) do
+    run_command(socket, container_id, fn scope ->
+      Docker.pull_image(scope, image)
+    end, fn name -> "Requested image pull for #{name}." end)
+  end
+
   defp run_command(socket, container_id, action_fun, success_message_fun) do
     container_name = container_name(socket.assigns.services, container_id)
 
@@ -254,6 +260,18 @@ defmodule HomelabWeb.DockerLive.Services do
         >
           <.icon name="hero-arrow-path" class="size-4" />
           <span class="ml-1">Restart</span>
+        </button>
+
+        <button
+          id={"pull-#{@container.id}"}
+          phx-click="pull"
+          phx-value-id={@container.id}
+          phx-value-image={@container.image}
+          phx-disable-with="Pulling…"
+          class="btn btn-ghost btn-sm"
+        >
+          <.icon name="hero-arrow-down-tray" class="size-4" />
+          <span class="ml-1">Pull latest</span>
         </button>
       </div>
     </div>

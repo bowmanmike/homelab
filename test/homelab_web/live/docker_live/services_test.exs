@@ -101,4 +101,29 @@ defmodule HomelabWeb.DockerLive.ServicesTest do
 
     assert render(view) =~ "homelab-web-1 restarted."
   end
+
+  test "pull action triggers adapter call", %{conn: conn, scope: scope} do
+    TestAdapter.set_list_response({:ok, [container_fixture()]})
+    TestAdapter.set_pull_response(:ok)
+
+    {:ok, view, _html} =
+      live_isolated(conn, Services, session: %{"current_scope" => scope})
+
+    view
+    |> element("#pull-abc123")
+    |> render_click()
+
+    assert render(view) =~ "Requested image pull for homelab-web-1."
+  end
+
+  test "pull action surfaces errors", %{conn: conn, scope: scope} do
+    TestAdapter.set_list_response({:ok, [container_fixture()]})
+    TestAdapter.set_pull_response({:error, :unauthorized})
+
+    {:ok, view, _html} =
+      live_isolated(conn, Services, session: %{"current_scope" => scope})
+
+    render_click(element(view, "#pull-abc123"))
+    assert render(view) =~ "unauthorized"
+  end
 end

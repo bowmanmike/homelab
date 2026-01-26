@@ -44,7 +44,8 @@
 - [ ] Add periodic refresh (timer or PubSub) so the service directory stays current without a full page reload.
 - [x] Split the Docker panel into its own LiveView (`HomelabWeb.DockerLive.Services`) routed under the authenticated scope so the dashboard can embed it while keeping responsibilities isolated.
 - [x] Extract host telemetry (clock + reboot status) into `HomelabWeb.HostLive.Signals` so the dashboard simply embeds the panel and we can reuse it elsewhere.
-- [x] Wire start/stop commands through the Docker context/adapter and expose buttons on the Docker LiveView with inline status feedback.
+- [x] Wire start/stop/restart/pull commands through the Docker context/adapter and expose buttons on the Docker LiveView with inline status feedback.
+- [ ] Build compose-aware commands (pull + recreate service) by packaging the Compose CLI inside Homelab, mounting the host compose project, and adding `Homelab.Commands.DockerCompose` that runs `docker compose up --pull --force-recreate` per service with locks, streaming output and storing audit logs. Update the Docker LiveView with a “Recreate service” action that only appears when compose labels are present and clearly communicates that it re-runs the service via compose.
 
 ### 6. Log Streaming & Observability
 

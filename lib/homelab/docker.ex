@@ -44,6 +44,11 @@ defmodule Homelab.Docker do
     adapter().restart_container(container_id, opts)
   end
 
+  @spec pull_image(map(), String.t()) :: command_result
+  def pull_image(_current_scope, image) when is_binary(image) do
+    adapter().pull_image(image)
+  end
+
   defp adapter do
     config = Application.get_env(:homelab, __MODULE__, [])
     Keyword.get(config, :adapter, default_adapter())

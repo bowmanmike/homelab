@@ -7,4 +7,5 @@ defmodule Homelab.Docker.Adapter do
   @callback start_container(String.t()) :: :ok | {:error, term()}
   @callback stop_container(String.t(), keyword()) :: :ok | {:error, term()}
   @callback restart_container(String.t(), keyword()) :: :ok | {:error, term()}
+  @callback pull_image(String.t()) :: :ok | {:error, term()}
 end

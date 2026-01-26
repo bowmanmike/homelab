@@ -61,6 +61,13 @@ defmodule Homelab.Docker.UnixSocketAdapter do
     |> handle_void_response()
   end
 
+  @impl true
+  def pull_image(image) do
+    "/images/create"
+    |> request(:post, params: [{"fromImage", image}], decode_json: false)
+    |> handle_pull_response()
+  end
+
   defp params_all?(opts) do
     Keyword.get(opts, :all?, false)
   end
@@ -110,4 +117,11 @@ defmodule Homelab.Docker.UnixSocketAdapter do
   end
 
   defp handle_void_response({:error, exception}), do: {:error, exception}
+
+  defp handle_pull_response({:ok, %Req.Response{status: status}}) when status in 200..299, do: :ok
+
+  defp handle_pull_response({:ok, %Req.Response{status: status, body: body}}),
+    do: {:error, {:http_error, status, body}}
+
+  defp handle_pull_response({:error, exception}), do: {:error, exception}
 end

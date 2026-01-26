@@ -22,6 +22,7 @@ defmodule Homelab.Docker.TestAdapter do
 
   def set_stop_response(response), do: put(:stop, response)
   def set_restart_response(response), do: put(:restart, response)
+  def set_pull_response(response), do: put(:pull, response)
 
   @impl true
   def list_containers(opts) do
@@ -38,6 +39,9 @@ defmodule Homelab.Docker.TestAdapter do
 
   @impl true
   def restart_container(container_id, _opts), do: exec(:restart, :ok, container_id)
+
+  @impl true
+  def pull_image(image), do: exec(:pull, :ok, image)
 
   defp exec(key, default, arg) do
     responder =

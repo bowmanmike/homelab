@@ -74,4 +74,12 @@ defmodule Homelab.DockerTest do
     TestAdapter.set_restart_response({:error, :timeout})
     assert {:error, :timeout} = Docker.restart_container(%{}, "abc123")
   end
+
+  test "pull_image delegates to adapter" do
+    TestAdapter.set_pull_response(:ok)
+    assert :ok = Docker.pull_image(%{}, "ghcr.io/example/app:latest")
+
+    TestAdapter.set_pull_response({:error, :unauthorized})
+    assert {:error, :unauthorized} = Docker.pull_image(%{}, "ghcr.io/example/app:latest")
+  end
 end
