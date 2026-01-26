@@ -15,15 +15,15 @@ defmodule HomelabWeb.HomeLive do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="flex flex-col gap-6">
-        <%= live_render(@socket, Signals,
+        {live_render(@socket, Signals,
           id: "host-signals-panel",
           session: %{"current_scope" => @current_scope, "embedded?" => true}
-        ) %>
+        )}
 
-        <%= live_render(@socket, Services,
+        {live_render(@socket, Services,
           id: "docker-services-panel",
           session: %{"current_scope" => @current_scope, "embedded?" => true}
-        ) %>
+        )}
       </div>
     </Layouts.app>
     """

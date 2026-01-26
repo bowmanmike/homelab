@@ -47,27 +47,47 @@ defmodule HomelabWeb.DockerLive.Services do
   end
 
   def handle_event("start", %{"id" => container_id}, socket) do
-    run_command(socket, container_id, fn scope ->
-      Docker.start_container(scope, container_id)
-    end, fn name -> "#{name} started." end)
+    run_command(
+      socket,
+      container_id,
+      fn scope ->
+        Docker.start_container(scope, container_id)
+      end,
+      fn name -> "#{name} started." end
+    )
   end
 
   def handle_event("stop", %{"id" => container_id}, socket) do
-    run_command(socket, container_id, fn scope ->
-      Docker.stop_container(scope, container_id)
-    end, fn name -> "#{name} stopped." end)
+    run_command(
+      socket,
+      container_id,
+      fn scope ->
+        Docker.stop_container(scope, container_id)
+      end,
+      fn name -> "#{name} stopped." end
+    )
   end
 
   def handle_event("restart", %{"id" => container_id}, socket) do
-    run_command(socket, container_id, fn scope ->
-      Docker.restart_container(scope, container_id)
-    end, fn name -> "#{name} restarted." end)
+    run_command(
+      socket,
+      container_id,
+      fn scope ->
+        Docker.restart_container(scope, container_id)
+      end,
+      fn name -> "#{name} restarted." end
+    )
   end
 
   def handle_event("pull", %{"id" => container_id, "image" => image}, socket) do
-    run_command(socket, container_id, fn scope ->
-      Docker.pull_image(scope, image)
-    end, fn name -> "Requested image pull for #{name}." end)
+    run_command(
+      socket,
+      container_id,
+      fn scope ->
+        Docker.pull_image(scope, image)
+      end,
+      fn name -> "Requested image pull for #{name}." end
+    )
   end
 
   defp run_command(socket, container_id, action_fun, success_message_fun) do
