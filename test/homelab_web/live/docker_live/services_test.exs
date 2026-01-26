@@ -13,7 +13,7 @@ defmodule HomelabWeb.DockerLive.ServicesTest do
 
   setup :register_and_log_in_user
 
-  defp container_fixture(opts \\ []) do
+  defp container_fixture(opts \\ %{}) do
     defaults = %{
       "Id" => "abc123",
       "Names" => ["/homelab-web-1"],

@@ -5,7 +5,7 @@ defmodule Homelab.Docker do
   context so we can stub it in tests and evolve the transport layer safely.
   """
 
-  alias Homelab.Docker.{Adapter, Container, UnixSocketAdapter}
+  alias Homelab.Docker.{Container, UnixSocketAdapter}
 
   @type list_result :: {:ok, [Container.t()]} | {:error, term()}
   @type command_result :: :ok | {:error, term()}
