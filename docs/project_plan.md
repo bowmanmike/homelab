@@ -33,25 +33,33 @@
 - [ ] Use `<.input>` + Tailwind-based panels/forms for action modals (e.g., restart service, tail logs) with micro-interactions (hover/press states, optimistic loading widgets).
 - [ ] Wire buttons/forms to `handle_event/3` callbacks that trigger command modules and stream updates back to the dashboard.
 
-### 5. Log Streaming & Observability
+### 5. Docker Socket Integration & Service Directory
+
+- [ ] Mount `/var/run/docker.sock` into the Homelab container (document compose/service changes) so Req can talk to the local Docker Engine API without `System.cmd/3`.
+- [ ] Add a `Homelab.Docker` context (and behaviour-backed adapter) that issues authenticated HTTP requests via Req to endpoints like `GET /containers/json`, normalizes compose labels (`com.docker.compose.*`), and returns structs describing each service.
+- [ ] Extend `HomelabWeb.HomeLive` to call the Docker context during `mount/3`, store the results in a LiveView stream (`@streams.services`), and refresh them on a timer or via PubSub updates while handling socket errors gracefully.
+- [ ] Build function components for service cards, status badges, and empty/error states to keep the dashboard markup composable; include hover/press micro-interactions and unique DOM ids for future LiveView tests.
+- [ ] Write unit tests for the Docker context (parsing sample Docker JSON payloads) and LiveView tests that assert the service list renders under success/error scenarios by injecting a mock adapter.
+
+### 6. Log Streaming & Observability
 
 - [ ] Implement supervised log-stream workers (`docker logs -f …`) that broadcast via PubSub, clamp stored lines, and escape payloads.
 - [ ] Build LiveView components that subscribe to streams, show incremental output, and reflect command progress (pending/running/succeeded/failed badges).
 - [ ] Add health indicators for compose services (status + last refresh timestamp) sourced from periodic command runs.
 
-### 6. Developer Experience & Safety Net
+### 7. Developer Experience & Safety Net
 
 - [ ] Define the `homelab-dev` Docker Compose stack plus helpers/scripts to start/stop it without touching production contexts.
 - [ ] Add mix tasks or scripts for running representative command scenarios locally (e.g., `mix homelab.docker.pull_all`).
 - [ ] Ensure `mix precommit` runs formatting, credo, test suites, and any dialyzer/spec checks.
 
-### 7. Packaging & Deployment
+### 8. Packaging & Deployment
 
 - [ ] Configure releases to package Phoenix + execution supervisor into a single container that runs as a non-root user.
 - [ ] Mount only the Docker socket and required volumes (SQLite DB, config, logs); document environment variables and secrets management.
 - [ ] Document deployment steps, auth bootstrap, and rollback/runbook procedures in `docs/DEPLOYMENT.md` (or similar).
 
-### 8. Future Backlog (Post-v1)
+### 9. Future Backlog (Post-v1)
 
 - [ ] Backup orchestration panels (visualize restic/systemd timers, trigger host scripts).
 - [ ] Health trend charts (historical disk usage, compose restarts, probe latency).
@@ -64,4 +72,3 @@
 1. Socialize this plan, confirm priorities, and time-box each workstream.
 2. Start with Workstreams 1–3 to establish the secure foundation (routing, command modules, persistence).
 3. Layer UI/UX and streaming pieces once backend contracts are in place, then finish with deployment hardening.
-

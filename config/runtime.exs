@@ -27,6 +27,11 @@ config :homelab, Homelab.HostSignals,
   reboot_required_path: System.get_env("REBOOT_REQUIRED_PATH") || "/var/run/reboot-required",
   uptime_path: System.get_env("UPTIME_PATH") || "/proc/uptime"
 
+config :homelab, Homelab.Docker.UnixSocketAdapter,
+  socket_path: System.get_env("DOCKER_SOCKET_PATH") || "/var/run/docker.sock",
+  base_url: System.get_env("DOCKER_API_BASE_URL") || "http:///v1.41",
+  host_header: System.get_env("DOCKER_API_HOST_HEADER") || "docker"
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
