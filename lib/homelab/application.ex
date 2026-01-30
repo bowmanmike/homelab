@@ -14,8 +14,7 @@ defmodule Homelab.Application do
        repos: Application.fetch_env!(:homelab, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:homelab, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Homelab.PubSub},
-      # Start a worker by calling: Homelab.Worker.start_link(arg)
-      # {Homelab.Worker, arg},
+      Homelab.Compose.Lock,
       # Start to serve requests, typically the last entry
       HomelabWeb.Endpoint
     ]

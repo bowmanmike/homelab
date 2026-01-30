@@ -1,6 +1,7 @@
 defmodule HomelabWeb.DockerLive.Services do
   use HomelabWeb, :live_view
 
+  alias Homelab.Compose
   alias Homelab.Docker
   alias Homelab.Docker.Container
 
@@ -13,7 +14,8 @@ defmodule HomelabWeb.DockerLive.Services do
       |> assign(:embedded?, session["embedded?"] || false)
       |> assign(:services, [])
       |> assign(:services_error, nil)
-      |> assign(:command_status, nil)
+      |> assign(:compose_available?, Compose.available?())
+      |> assign(:compose_project_dir, Compose.project_dir())
 
     {:ok, socket |> load_services() |> schedule_refresh()}
   end
@@ -24,7 +26,8 @@ defmodule HomelabWeb.DockerLive.Services do
       services={@services}
       services_error={@services_error}
       embedded?={true}
-      command_status={@command_status}
+      compose_available?={@compose_available?}
+      compose_project_dir={@compose_project_dir}
     />
     """
   end
@@ -36,7 +39,8 @@ defmodule HomelabWeb.DockerLive.Services do
         services={@services}
         services_error={@services_error}
         embedded?={false}
-        command_status={@command_status}
+        compose_available?={@compose_available?}
+        compose_project_dir={@compose_project_dir}
       />
     </Layouts.app>
     """
@@ -90,6 +94,17 @@ defmodule HomelabWeb.DockerLive.Services do
     )
   end
 
+  def handle_event("update_service", %{"id" => container_id, "service" => service}, socket) do
+    run_command(
+      socket,
+      container_id,
+      fn scope ->
+        Compose.update_service(scope, service)
+      end,
+      fn name -> "#{name} updated successfully." end
+    )
+  end
+
   defp run_command(socket, container_id, action_fun, success_message_fun) do
     container_name = container_name(socket.assigns.services, container_id)
 
@@ -97,13 +112,19 @@ defmodule HomelabWeb.DockerLive.Services do
       :ok ->
         {:noreply,
          socket
-         |> assign(:command_status, {:ok, success_message_fun.(container_name)})
+         |> put_flash(:info, success_message_fun.(container_name))
+         |> load_services()}
+
+      {:ok, _output} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, success_message_fun.(container_name))
          |> load_services()}
 
       {:error, reason} ->
         {:noreply,
          socket
-         |> assign(:command_status, {:error, command_error(reason)})
+         |> put_flash(:error, command_error(reason))
          |> load_services()}
     end
   end
@@ -116,6 +137,10 @@ defmodule HomelabWeb.DockerLive.Services do
   end
 
   defp command_error({:http_error, status, _body}), do: "Docker API error (#{status})"
+  defp command_error(:lock_busy), do: "Another compose operation is in progress"
+  defp command_error({:pull_failed, code, _output}), do: "Pull failed (exit #{code})"
+  defp command_error({:up_failed, code, _output}), do: "Recreate failed (exit #{code})"
+  defp command_error(:timeout), do: "Command timed out"
   defp command_error(%{} = error), do: inspect(error)
   defp command_error(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp command_error(reason), do: inspect(reason)
@@ -145,7 +170,8 @@ defmodule HomelabWeb.DockerLive.Services do
   attr :services, :list, required: true
   attr :services_error, :string, default: nil
   attr :embedded?, :boolean, default: false
-  attr :command_status, :any, default: nil
+  attr :compose_available?, :boolean, default: false
+  attr :compose_project_dir, :string, default: nil
 
   defp docker_panel(assigns) do
     ~H"""
@@ -165,23 +191,11 @@ defmodule HomelabWeb.DockerLive.Services do
           </p>
         </div>
 
-        <div class="flex flex-col items-end gap-2 text-sm">
-          <%= if @services_error do %>
-            <span class="inline-flex items-center gap-2 rounded-full bg-error/10 px-3 py-1 text-sm font-semibold text-error">
-              <.icon name="hero-exclamation-triangle" class="size-4" />
-              {@services_error}
-            </span>
-          <% else %>
-            <span class="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
-              <.icon name="hero-check-circle" class="size-4" /> All systems reachable
-            </span>
-          <% end %>
-          <%= if @command_status do %>
-            <span class={command_status_classes(@command_status)}>
-              {command_status_label(@command_status)}
-            </span>
-          <% end %>
-        </div>
+        <.status_badge
+          services_error={@services_error}
+          compose_available?={@compose_available?}
+          compose_project_dir={@compose_project_dir}
+        />
       </div>
 
       <div id="services-list" class="mt-6 grid gap-4">
@@ -196,12 +210,49 @@ defmodule HomelabWeb.DockerLive.Services do
           id={"service-#{container.id}"}
           class="overflow-hidden rounded-2xl border border-base-300 bg-base-100 transition duration-200 ease-out hover:-translate-y-0.5 hover:border-primary/70 hover:shadow-lg hover:shadow-primary/10"
         >
-          <.container_card container={container} />
+          <.container_card container={container} compose_available?={@compose_available?} />
         </div>
       </div>
     </div>
     """
   end
+
+  attr :services_error, :string, default: nil
+  attr :compose_available?, :boolean, default: false
+  attr :compose_project_dir, :string, default: nil
+
+  defp status_badge(%{services_error: error} = assigns) when not is_nil(error) do
+    ~H"""
+    <span class="inline-flex items-center gap-2 rounded-full bg-error/10 px-3 py-1 text-sm font-semibold text-error">
+      <.icon name="hero-exclamation-triangle" class="size-4" />
+      {@services_error}
+    </span>
+    """
+  end
+
+  defp status_badge(%{compose_available?: false} = assigns) do
+    ~H"""
+    <span
+      class="inline-flex items-center gap-2 rounded-full bg-warning/10 px-3 py-1 text-sm font-semibold text-warning"
+      title={compose_warning_title(@compose_project_dir)}
+    >
+      <.icon name="hero-exclamation-triangle" class="size-4" /> Compose not configured
+    </span>
+    """
+  end
+
+  defp status_badge(assigns) do
+    ~H"""
+    <span class="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1 text-sm font-semibold text-success">
+      <.icon name="hero-check-circle" class="size-4" /> All systems ready
+    </span>
+    """
+  end
+
+  defp compose_warning_title(nil), do: "Set DOCKER_COMPOSE_FILE_PATH to enable service updates"
+
+  defp compose_warning_title(dir),
+    do: "Directory #{dir} does not exist or has no compose file"
 
   defp panel_description(true), do: "Live snapshot from the host Docker engine."
 
@@ -209,6 +260,7 @@ defmodule HomelabWeb.DockerLive.Services do
     do: "Every running container in the compose stack, refreshed continuously."
 
   attr :container, Container, required: true
+  attr :compose_available?, :boolean, default: false
 
   defp container_card(assigns) do
     ~H"""
@@ -234,14 +286,24 @@ defmodule HomelabWeb.DockerLive.Services do
         </span>
       </div>
 
-      <dl class="grid gap-4 text-sm text-base-content/80">
+      <dl class="grid gap-4 text-sm text-base-content/80 sm:grid-cols-2">
         <div>
           <dt class="text-base-content/60">Image</dt>
           <dd class="mt-1 font-medium">{@container.image}</dd>
         </div>
         <div>
+          <dt class="text-base-content/60">Digest</dt>
+          <dd class="mt-1 font-mono text-xs" title={@container.image_id}>
+            {truncate_digest(@container.image_id)}
+          </dd>
+        </div>
+        <div>
           <dt class="text-base-content/60">Status</dt>
           <dd class="mt-1 font-medium">{@container.status}</dd>
+        </div>
+        <div :if={@container.compose_service}>
+          <dt class="text-base-content/60">Compose Service</dt>
+          <dd class="mt-1 font-medium">{@container.compose_service}</dd>
         </div>
       </dl>
 
@@ -293,6 +355,19 @@ defmodule HomelabWeb.DockerLive.Services do
           <.icon name="hero-arrow-down-tray" class="size-4" />
           <span class="ml-1">Pull latest</span>
         </button>
+
+        <button
+          :if={@container.compose_service && @compose_available?}
+          id={"update-#{@container.id}"}
+          phx-click="update_service"
+          phx-value-id={@container.id}
+          phx-value-service={@container.compose_service}
+          phx-disable-with="Updating…"
+          class="btn btn-secondary btn-sm"
+        >
+          <.icon name="hero-arrow-path" class="size-4" />
+          <span class="ml-1">Update</span>
+        </button>
       </div>
     </div>
     """
@@ -340,16 +415,6 @@ defmodule HomelabWeb.DockerLive.Services do
     state in ["running"]
   end
 
-  defp command_status_classes({:ok, _}) do
-    "inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
-  end
-
-  defp command_status_classes({:error, _}) do
-    "inline-flex items-center gap-2 rounded-full bg-error/10 px-3 py-1 text-sm font-semibold text-error"
-  end
-
-  defp command_status_label({_, message}), do: message
-
   defp humanize_seconds(seconds) when seconds < 60, do: "#{seconds}s"
 
   defp humanize_seconds(seconds) do
@@ -368,4 +433,10 @@ defmodule HomelabWeb.DockerLive.Services do
   defp docker_error_message(%{} = error), do: inspect(error)
   defp docker_error_message(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp docker_error_message(reason), do: inspect(reason)
+
+  defp truncate_digest(nil), do: "—"
+
+  defp truncate_digest("sha256:" <> hash), do: "sha256:#{String.slice(hash, 0, 12)}"
+
+  defp truncate_digest(digest) when is_binary(digest), do: String.slice(digest, 0, 19)
 end

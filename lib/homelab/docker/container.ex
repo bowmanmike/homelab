@@ -15,7 +15,9 @@ defmodule Homelab.Docker.Container do
     :labels,
     :compose_project,
     :compose_service,
-    :compose_container_number
+    :compose_container_number,
+    :compose_config_files,
+    :compose_working_dir
   ]
 
   @type t :: %__MODULE__{
@@ -29,12 +31,16 @@ defmodule Homelab.Docker.Container do
           labels: map(),
           compose_project: String.t() | nil,
           compose_service: String.t() | nil,
-          compose_container_number: String.t() | nil
+          compose_container_number: String.t() | nil,
+          compose_config_files: String.t() | nil,
+          compose_working_dir: String.t() | nil
         }
 
   @compose_project_label "com.docker.compose.project"
   @compose_service_label "com.docker.compose.service"
   @compose_container_number_label "com.docker.compose.container-number"
+  @compose_config_files_label "com.docker.compose.project.config_files"
+  @compose_working_dir_label "com.docker.compose.project.working_dir"
 
   @doc """
   Converts the JSON map returned by `/containers/json` into a container struct.
@@ -54,7 +60,9 @@ defmodule Homelab.Docker.Container do
       labels: labels,
       compose_project: Map.get(labels, @compose_project_label),
       compose_service: Map.get(labels, @compose_service_label),
-      compose_container_number: Map.get(labels, @compose_container_number_label)
+      compose_container_number: Map.get(labels, @compose_container_number_label),
+      compose_config_files: Map.get(labels, @compose_config_files_label),
+      compose_working_dir: Map.get(labels, @compose_working_dir_label)
     }
   end
 

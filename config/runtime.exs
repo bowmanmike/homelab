@@ -32,6 +32,10 @@ config :homelab, Homelab.Docker.UnixSocketAdapter,
   base_url: System.get_env("DOCKER_API_BASE_URL") || "http:///v1.41",
   host_header: System.get_env("DOCKER_API_HOST_HEADER") || "docker"
 
+config :homelab, Homelab.Compose,
+  project_dir: System.get_env("DOCKER_COMPOSE_FILE_PATH") || "/compose",
+  command_timeout: :timer.minutes(2)
+
 if config_env() == :prod do
   database_path =
     System.get_env("DATABASE_PATH") ||
