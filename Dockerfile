@@ -71,9 +71,20 @@ RUN mix release
 FROM ${RUNNER_IMAGE} AS final
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 \
-             locales ca-certificates docker-cli docker-compose-v2 \
+  && apt-get install -y --no-install-recommends \
+     libstdc++6 openssl libncurses6 locales ca-certificates curl \
   && rm -rf /var/lib/apt/lists/*
+
+# Install Docker CLI and Compose plugin
+ARG DOCKER_VERSION=28.2.2
+ARG COMPOSE_VERSION=2.37.0
+ARG TARGETARCH
+RUN curl -fsSL "https://download.docker.com/linux/static/stable/$(uname -m)/docker-${DOCKER_VERSION}.tgz" \
+    | tar xz --strip-components=1 -C /usr/local/bin docker/docker \
+  && mkdir -p /usr/local/lib/docker/cli-plugins \
+  && curl -fsSL "https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-$(uname -m)" \
+     -o /usr/local/lib/docker/cli-plugins/docker-compose \
+  && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
 # Set the locale
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen \
@@ -91,10 +102,6 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/homelab ./
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends libstdc++6 openssl libncurses6 locales ca-certificates curl \
-  && rm -rf /var/lib/apt/lists/*
 
 
 RUN groupadd -g 988 docker && usermod -a -G docker nobody
