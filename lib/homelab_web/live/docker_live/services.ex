@@ -289,11 +289,13 @@ defmodule HomelabWeb.DockerLive.Services do
       <dl class="grid gap-4 text-sm text-base-content/80 sm:grid-cols-2">
         <div>
           <dt class="text-base-content/60">Image</dt>
-          <dd class="mt-1 font-medium">{@container.image}</dd>
+          <dd class="mt-1 font-medium truncate" title={@container.image}>
+            {format_image_name(@container.image)}
+          </dd>
         </div>
         <div>
           <dt class="text-base-content/60">Digest</dt>
-          <dd class="mt-1 font-mono text-xs" title={@container.image_id}>
+          <dd class="mt-1 font-mono text-xs truncate" title={@container.image_id}>
             {truncate_digest(@container.image_id)}
           </dd>
         </div>
@@ -434,9 +436,11 @@ defmodule HomelabWeb.DockerLive.Services do
   defp docker_error_message(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp docker_error_message(reason), do: inspect(reason)
 
+  defp format_image_name(nil), do: "—"
+  defp format_image_name("sha256:" <> hash), do: "sha256:#{String.slice(hash, 0, 12)}"
+  defp format_image_name(image), do: image
+
   defp truncate_digest(nil), do: "—"
-
   defp truncate_digest("sha256:" <> hash), do: "sha256:#{String.slice(hash, 0, 12)}"
-
   defp truncate_digest(digest) when is_binary(digest), do: String.slice(digest, 0, 19)
 end
