@@ -105,6 +105,22 @@ defmodule HomelabWeb.DockerLive.Services do
     )
   end
 
+  def handle_event("update_all", _params, socket) do
+    case Compose.update_all(socket.assigns.current_scope) do
+      {:ok, _output} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "All services updated successfully.")
+         |> load_services()}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, command_error(reason))
+         |> load_services()}
+    end
+  end
+
   defp run_command(socket, container_id, action_fun, success_message_fun) do
     container_name = container_name(socket.assigns.services, container_id)
 
@@ -191,11 +207,24 @@ defmodule HomelabWeb.DockerLive.Services do
           </p>
         </div>
 
-        <.status_badge
-          services_error={@services_error}
-          compose_available?={@compose_available?}
-          compose_project_dir={@compose_project_dir}
-        />
+        <div class="flex flex-col items-end gap-2">
+          <.status_badge
+            services_error={@services_error}
+            compose_available?={@compose_available?}
+            compose_project_dir={@compose_project_dir}
+          />
+          <button
+            :if={@compose_available?}
+            id="update-all"
+            phx-click="update_all"
+            phx-disable-with="Updating all…"
+            data-confirm="Pull and recreate all compose services?"
+            class="btn btn-secondary btn-sm"
+          >
+            <.icon name="hero-arrow-path" class="size-4" />
+            <span class="ml-1">Update all</span>
+          </button>
+        </div>
       </div>
 
       <div id="services-list" class="mt-6 grid gap-4">

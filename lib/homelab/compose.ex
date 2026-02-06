@@ -70,6 +70,25 @@ defmodule Homelab.Compose do
   end
 
   @doc """
+  Pulls latest images and recreates all services in the compose stack.
+  """
+  @spec update_all(map()) :: result()
+  def update_all(_current_scope) do
+    with_lock(fn ->
+      with {:ok, _pull_output} <- runner().pull_all(),
+           {:ok, up_output} <- do_up_all() do
+        {:ok, up_output}
+      else
+        {:error, {:exit, code, output}} ->
+          {:error, {:pull_failed, code, output}}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end)
+  end
+
+  @doc """
   Pulls the latest image for a service without recreating.
 
   Useful when you want to stage an update without restarting the service.
@@ -121,6 +140,14 @@ defmodule Homelab.Compose do
 
   defp do_up(service) do
     case runner().up(service) do
+      {:ok, output} -> {:ok, output}
+      {:error, {:exit, code, output}} -> {:error, {:up_failed, code, output}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp do_up_all do
+    case runner().up_all() do
       {:ok, output} -> {:ok, output}
       {:error, {:exit, code, output}} -> {:error, {:up_failed, code, output}}
       {:error, reason} -> {:error, reason}

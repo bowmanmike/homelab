@@ -10,5 +10,7 @@ defmodule Homelab.Compose.RunnerBehaviour do
   @type result :: {:ok, output()} | {:error, error()}
 
   @callback pull(service :: String.t()) :: result()
+  @callback pull_all() :: result()
   @callback up(service :: String.t()) :: result()
+  @callback up_all() :: result()
 end

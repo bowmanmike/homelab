@@ -12,6 +12,7 @@
 
 ## Features
 
+- [ ] Host reboot from UI — requires host access from inside container (D-Bus socket mount, SSH, or host agent). See architecture.md for security constraints.
 - [ ] Add periodic refresh for Docker panel (currently only refreshes on mount and after commands)
 - [ ] Add log streaming for compose commands (currently just captures output at completion)
 - [ ] Audit logging for compose operations (persist to SQLite)

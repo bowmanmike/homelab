@@ -17,9 +17,19 @@ defmodule Homelab.Compose.Runner do
   end
 
   @impl true
+  def pull_all do
+    run_compose(["pull"])
+  end
+
+  @impl true
   def up(service) do
     service = validate_service_name!(service)
     run_compose(["up", "-d", "--force-recreate", service])
+  end
+
+  @impl true
+  def up_all do
+    run_compose(["up", "-d", "--force-recreate"])
   end
 
   @doc """
