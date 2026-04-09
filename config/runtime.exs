@@ -34,6 +34,7 @@ config :homelab, Homelab.Docker.UnixSocketAdapter,
 
 config :homelab, Homelab.Compose,
   project_dir: System.get_env("DOCKER_COMPOSE_FILE_PATH") || "/compose",
+  project_name: System.get_env("DOCKER_COMPOSE_PROJECT_NAME"),
   command_timeout: :timer.minutes(2)
 
 if config_env() == :prod do

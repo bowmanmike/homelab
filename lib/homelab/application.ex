@@ -7,6 +7,8 @@ defmodule Homelab.Application do
 
   @impl true
   def start(_type, _args) do
+    maybe_detect_compose_project_name()
+
     children = [
       HomelabWeb.Telemetry,
       Homelab.Repo,
@@ -31,6 +33,25 @@ defmodule Homelab.Application do
   def config_change(changed, _new, removed) do
     HomelabWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp maybe_detect_compose_project_name do
+    compose_config = Application.get_env(:homelab, Homelab.Compose, [])
+
+    if Keyword.get(compose_config, :project_name) == nil do
+      hostname =
+        (System.get_env("HOSTNAME") || File.read!("/etc/hostname"))
+        |> String.trim()
+
+      case Homelab.Docker.UnixSocketAdapter.container_labels(hostname) do
+        {:ok, %{"com.docker.compose.project" => project}} when is_binary(project) ->
+          updated = Keyword.put(compose_config, :project_name, project)
+          Application.put_env(:homelab, Homelab.Compose, updated)
+
+        _ ->
+          :ok
+      end
+    end
   end
 
   defp skip_migrations?() do

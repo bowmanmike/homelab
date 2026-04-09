@@ -54,7 +54,13 @@ defmodule Homelab.Compose.Runner do
     timeout = command_timeout()
     project_dir = project_dir()
 
-    full_args = ["compose", "--project-directory", project_dir | args]
+    project_name_args =
+      case project_name() do
+        nil -> []
+        name -> ["--project-name", name]
+      end
+
+    full_args = ["compose", "--project-directory", project_dir] ++ project_name_args ++ args
 
     require Logger
     Logger.info("Running: docker #{Enum.join(full_args, " ")}")
@@ -85,6 +91,11 @@ defmodule Homelab.Compose.Runner do
   defp project_dir do
     Application.fetch_env!(:homelab, Homelab.Compose)
     |> Keyword.fetch!(:project_dir)
+  end
+
+  defp project_name do
+    Application.fetch_env!(:homelab, Homelab.Compose)
+    |> Keyword.get(:project_name)
   end
 
   defp command_timeout do

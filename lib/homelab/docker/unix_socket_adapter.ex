@@ -61,10 +61,27 @@ defmodule Homelab.Docker.UnixSocketAdapter do
     |> handle_void_response()
   end
 
+  @doc """
+  Returns the Docker labels for a container by ID or name.
+  Not part of the adapter behaviour — used internally for self-detection.
+  """
+  def container_labels(container_id) do
+    case Req.get(client(), url: "/containers/#{container_id}/json") do
+      {:ok, %Req.Response{status: 200, body: %{"Config" => %{"Labels" => labels}}}} ->
+        {:ok, labels || %{}}
+
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:error, {:http_error, status, body}}
+
+      {:error, exception} ->
+        {:error, exception}
+    end
+  end
+
   @impl true
   def pull_image(image) do
     "/images/create"
-    |> request(:post, params: [{"fromImage", image}], decode_json: false)
+    |> request(:post, params: [{"fromImage", image}], decode_body: false)
     |> handle_pull_response()
   end
 
