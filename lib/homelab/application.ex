@@ -39,18 +39,27 @@ defmodule Homelab.Application do
     compose_config = Application.get_env(:homelab, Homelab.Compose, [])
 
     if Keyword.get(compose_config, :project_name) == nil do
-      hostname =
-        (System.get_env("HOSTNAME") || File.read!("/etc/hostname"))
-        |> String.trim()
-
-      case Homelab.Docker.UnixSocketAdapter.container_labels(hostname) do
-        {:ok, %{"com.docker.compose.project" => project}} when is_binary(project) ->
-          updated = Keyword.put(compose_config, :project_name, project)
-          Application.put_env(:homelab, Homelab.Compose, updated)
-
-        _ ->
-          :ok
+      with hostname when is_binary(hostname) <- own_hostname(),
+           {:ok, %{"com.docker.compose.project" => project}} when is_binary(project) <-
+             Homelab.Docker.UnixSocketAdapter.container_labels(hostname) do
+        updated = Keyword.put(compose_config, :project_name, project)
+        Application.put_env(:homelab, Homelab.Compose, updated)
+      else
+        _ -> :ok
       end
+    end
+  end
+
+  defp own_hostname do
+    case System.get_env("HOSTNAME") do
+      hostname when is_binary(hostname) ->
+        String.trim(hostname)
+
+      nil ->
+        case File.read("/etc/hostname") do
+          {:ok, contents} -> String.trim(contents)
+          {:error, _} -> nil
+        end
     end
   end
 
