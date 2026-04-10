@@ -18,7 +18,10 @@ defmodule Homelab.Compose.Runner do
 
   @impl true
   def pull_all do
-    run_compose(["pull"])
+    case other_services() do
+      [] -> run_compose(["pull"])
+      services -> run_compose(["pull"] ++ services)
+    end
   end
 
   @impl true
@@ -29,7 +32,10 @@ defmodule Homelab.Compose.Runner do
 
   @impl true
   def up_all do
-    run_compose(["up", "-d", "--force-recreate"])
+    case other_services() do
+      [] -> run_compose(["up", "-d", "--force-recreate"])
+      services -> run_compose(["up", "-d", "--force-recreate"] ++ services)
+    end
   end
 
   @doc """
@@ -104,6 +110,35 @@ defmodule Homelab.Compose.Runner do
   defp project_name do
     Application.fetch_env!(:homelab, Homelab.Compose)
     |> Keyword.get(:project_name)
+  end
+
+  defp self_service do
+    Application.fetch_env!(:homelab, Homelab.Compose)
+    |> Keyword.get(:self_service)
+  end
+
+  defp other_services do
+    case {self_service(), list_services()} do
+      {nil, _} -> []
+      {_, {:error, _}} -> []
+      {self, {:ok, services}} -> Enum.reject(services, &(&1 == self))
+    end
+  end
+
+  defp list_services do
+    case run_compose(["config", "--services"]) do
+      {:ok, output} ->
+        services =
+          output
+          |> String.split("\n")
+          |> Enum.map(&String.trim/1)
+          |> Enum.filter(&Regex.match?(@valid_service_name_regex, &1))
+
+        {:ok, services}
+
+      error ->
+        error
+    end
   end
 
   defp command_timeout do

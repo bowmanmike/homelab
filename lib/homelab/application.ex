@@ -37,18 +37,27 @@ defmodule Homelab.Application do
 
   defp maybe_detect_compose_project_name do
     compose_config = Application.get_env(:homelab, Homelab.Compose, [])
+    needs_project = Keyword.get(compose_config, :project_name) == nil
+    needs_service = Keyword.get(compose_config, :self_service) == nil
 
-    if Keyword.get(compose_config, :project_name) == nil do
+    if needs_project or needs_service do
       with hostname when is_binary(hostname) <- own_hostname(),
-           {:ok, %{"com.docker.compose.project" => project}} when is_binary(project) <-
-             Homelab.Docker.UnixSocketAdapter.container_labels(hostname) do
-        updated = Keyword.put(compose_config, :project_name, project)
+           {:ok, labels} <- Homelab.Docker.UnixSocketAdapter.container_labels(hostname) do
+        updated =
+          compose_config
+          |> maybe_put(:project_name, needs_project, labels["com.docker.compose.project"])
+          |> maybe_put(:self_service, needs_service, labels["com.docker.compose.service"])
+
         Application.put_env(:homelab, Homelab.Compose, updated)
       else
         _ -> :ok
       end
     end
   end
+
+  defp maybe_put(config, _key, false, _value), do: config
+  defp maybe_put(config, _key, _needed, nil), do: config
+  defp maybe_put(config, key, true, value), do: Keyword.put(config, key, value)
 
   defp own_hostname do
     case System.get_env("HOSTNAME") do
