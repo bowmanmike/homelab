@@ -332,6 +332,10 @@ defmodule HomelabWeb.DockerLive.Services do
           <dt class="text-base-content/60">Status</dt>
           <dd class="mt-1 font-medium">{@container.status}</dd>
         </div>
+        <div>
+          <dt class="text-base-content/60">Created</dt>
+          <dd class="mt-1 font-medium">{format_created_at(@container.created_at)}</dd>
+        </div>
         <div :if={@container.compose_service}>
           <dt class="text-base-content/60">Compose Service</dt>
           <dd class="mt-1 font-medium">{@container.compose_service}</dd>
@@ -464,6 +468,12 @@ defmodule HomelabWeb.DockerLive.Services do
   defp docker_error_message(%{} = error), do: inspect(error)
   defp docker_error_message(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp docker_error_message(reason), do: inspect(reason)
+
+  defp format_created_at(nil), do: "—"
+
+  defp format_created_at(%DateTime{} = dt) do
+    Calendar.strftime(dt, "%b %d %Y, %H:%M")
+  end
 
   defp format_image_name(nil), do: "—"
   defp format_image_name("sha256:" <> hash), do: "sha256:#{String.slice(hash, 0, 12)}"
