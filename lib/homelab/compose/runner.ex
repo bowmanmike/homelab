@@ -60,7 +60,15 @@ defmodule Homelab.Compose.Runner do
         name -> ["--project-name", name]
       end
 
-    full_args = ["compose", "--project-directory", project_dir] ++ project_name_args ++ args
+    env_file_args =
+      case File.exists?(Path.join(project_dir, ".env")) do
+        true -> ["--env-file", Path.join(project_dir, ".env")]
+        false -> []
+      end
+
+    full_args =
+      ["compose", "--project-directory", project_dir] ++
+        project_name_args ++ env_file_args ++ args
 
     require Logger
     Logger.info("Running: docker #{Enum.join(full_args, " ")}")
