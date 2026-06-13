@@ -17,6 +17,11 @@ defmodule Homelab.Application do
       {DNSCluster, query: Application.get_env(:homelab, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Homelab.PubSub},
       Homelab.Compose.Lock,
+      # Runs compose commands in processes decoupled from the web request, so an
+      # update that recreates a network-critical service (cloudflared, or the
+      # homelab container itself) can drop the caller's connection without
+      # killing the in-flight `docker compose up`.
+      {Task.Supervisor, name: Homelab.Compose.TaskSupervisor},
       # Start to serve requests, typically the last entry
       HomelabWeb.Endpoint
     ]

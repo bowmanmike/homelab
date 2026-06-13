@@ -156,6 +156,7 @@ defmodule HomelabWeb.DockerLive.Services do
   defp command_error(:lock_busy), do: "Another compose operation is in progress"
   defp command_error({:pull_failed, code, _output}), do: "Pull failed (exit #{code})"
   defp command_error({:up_failed, code, _output}), do: "Recreate failed (exit #{code})"
+  defp command_error({:execution_failed, _reason}), do: "Compose command crashed"
   defp command_error(:timeout), do: "Command timed out"
   defp command_error(%{} = error), do: inspect(error)
   defp command_error(reason) when is_atom(reason), do: Atom.to_string(reason)
