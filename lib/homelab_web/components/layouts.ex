@@ -11,6 +11,13 @@ defmodule HomelabWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
+  @git_sha (case System.cmd("git", ["rev-parse", "--short", "HEAD"], stderr_to_stdout: true) do
+              {sha, 0} -> String.trim(sha)
+              _ -> "unknown"
+            end)
+
+  defp git_sha, do: @git_sha
+
   @doc """
   Renders your app layout.
 
@@ -118,6 +125,12 @@ defmodule HomelabWeb.Layouts do
         {render_slot(@inner_block)}
       </div>
     </main>
+
+    <footer class="border-t border-base-300 px-4 py-3 sm:px-6 lg:px-8">
+      <p class="text-right font-mono text-xs text-base-content/40">
+        {git_sha()}
+      </p>
+    </footer>
 
     <.flash_group flash={@flash} />
     """
