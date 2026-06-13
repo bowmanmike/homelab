@@ -24,17 +24,22 @@ defmodule Homelab.Compose.Runner do
     end
   end
 
+  # `--wait` blocks until the recreated container is running (and healthy, if it
+  # defines a healthcheck) before the command returns, so a reported success
+  # reflects the new container actually being up rather than just created.
+  @up_args ["up", "-d", "--force-recreate", "--wait"]
+
   @impl true
   def up(service) do
     service = validate_service_name!(service)
-    run_compose(["up", "-d", "--force-recreate", service])
+    run_compose(@up_args ++ [service])
   end
 
   @impl true
   def up_all do
     case other_services() do
-      [] -> run_compose(["up", "-d", "--force-recreate"])
-      services -> run_compose(["up", "-d", "--force-recreate"] ++ services)
+      [] -> run_compose(@up_args)
+      services -> run_compose(@up_args ++ services)
     end
   end
 
