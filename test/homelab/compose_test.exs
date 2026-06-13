@@ -52,7 +52,12 @@ defmodule Homelab.ComposeTest do
     Process.register(self(), @listener)
 
     previous = Application.get_env(:homelab, Homelab.Compose, [])
-    Application.put_env(:homelab, Homelab.Compose, Keyword.put(previous, :runner, RecordingRunner))
+
+    Application.put_env(
+      :homelab,
+      Homelab.Compose,
+      Keyword.put(previous, :runner, RecordingRunner)
+    )
 
     on_exit(fn ->
       Application.put_env(:homelab, Homelab.Compose, previous)
