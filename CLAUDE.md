@@ -28,6 +28,12 @@ The dev compose stack (`dev/docker-compose.yml`) spins up stub services (whoami,
 
 `mix precommit` runs: compile (warnings-as-errors), unused deps check, format, and full test suite. Always run it before finishing any feature.
 
+## Testing
+
+`Homelab.Docker` uses an adapter behaviour — tests use `Homelab.Docker.Adapter.Stub` (configured in `config/test.exs`), not the real Unix socket. When writing Docker-related tests, use the stub; never try to connect to a real Docker socket in tests.
+
+`Homelab.Compose` similarly swaps the runner in test config.
+
 ## Full Project Guidelines
 
 See [AGENTS.md](./AGENTS.md) for Phoenix v1.8, LiveView, Elixir, Ecto, authentication, and UI conventions.
