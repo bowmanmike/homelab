@@ -11,10 +11,10 @@ defmodule HomelabWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
-  @git_sha case System.cmd("git", ["rev-parse", "--short", "HEAD"], stderr_to_stdout: true) do
+  @git_sha (case System.cmd("git", ["rev-parse", "--short", "HEAD"], stderr_to_stdout: true) do
     {sha, 0} -> String.trim(sha)
     _ -> "unknown"
-  end
+  end)
 
   defp git_sha, do: @git_sha
 
