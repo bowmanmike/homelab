@@ -26,7 +26,7 @@ The dev compose stack (`dev/docker-compose.yml`) spins up stub services (whoami,
 | Database reset | `mix ecto.reset` |
 | Database migrate | `mix ecto.migrate` |
 
-`mix precommit` runs: compile (warnings-as-errors), unused deps check, format, and full test suite. Always run it before finishing any feature.
+**REQUIRED: Always run `mix precommit` and fix all issues before creating any git commit.** This is non-negotiable. `mix precommit` runs: compile (warnings-as-errors), unused deps check, format, and full test suite. Do not commit if it fails.
 
 ## Testing
 
