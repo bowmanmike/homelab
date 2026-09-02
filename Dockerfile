@@ -104,7 +104,8 @@ ENV MIX_ENV="prod"
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/homelab ./
 
 
-RUN groupadd -g 938 docker && usermod -a -G docker nobody
+# RUN groupadd -g 938 docker && usermod -a -G docker nobody
+RUN usermod -a -G docker nobody
 
 USER nobody
 
